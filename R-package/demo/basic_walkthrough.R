@@ -64,8 +64,8 @@ raw = xgb.save.raw(bst)
 # load binary model to R
 bst3 <- xgb.load(raw)
 pred3 <- predict(bst3, test$data)
-# pred2 should be identical to pred
-print(paste("sum(abs(pred3-pred))=", sum(abs(pred2-pred))))
+# pred3 should be identical to pred
+print(paste("sum(abs(pred3-pred))=", sum(abs(pred3-pred))))
 
 #----------------Advanced features --------------
 # to use advanced features, we need to put data in xgb.DMatrix
@@ -102,9 +102,9 @@ xgb.dump(bst, "dump.raw.txt", with.stats = T)
 
 # Finally, you can check which features are the most important.
 print("Most important features (look at column Gain):")
-imp_matrix <- xgb.importance(feature_names = train$data@Dimnames[[2]], filename_dump = "dump.raw.txt")
+imp_matrix <- xgb.importance(feature_names = train$data@Dimnames[[2]], model = bst)
 print(imp_matrix)
 
 # Feature importance bar plot by gain
 print("Feature importance Plot : ")
-print(xgb.plot.importance(imp_matrix))
+print(xgb.plot.importance(importance_matrix = imp_matrix))

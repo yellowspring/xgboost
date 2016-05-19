@@ -32,7 +32,7 @@ Parameters for Tree Booster
   - minimum loss reduction required to make a further partition on a leaf node of the tree. the larger, the more conservative the algorithm will be.
   - range: [0,∞]
 * max_depth [default=6]
-  - maximum depth of a tree
+  - maximum depth of a tree, increase this value will make model more complex / likely to be overfitting.
   - range: [1,∞]
 * min_child_weight [default=1]
   - minimum sum of instance weight(hessian) needed in a child. If the tree partition step results in a leaf node with the sum of instance weight less than min_child_weight, then the building process will give up further partitioning. In linear regression mode, this simply corresponds to minimum number of instances needed to be in each node. The larger, the more conservative the algorithm will be.
@@ -46,17 +46,40 @@ Parameters for Tree Booster
 * colsample_bytree [default=1]
   - subsample ratio of columns when constructing each tree.
   - range: (0,1]
+* colsample_bylevel [default=1]
+  - subsample ratio of columns for each split, in each level.
+  - range: (0,1]
 * lambda [default=1]
-  - L2 regularization term on weights
+  - L2 regularization term on weights, increase this value will make model more conservative.
 * alpha [default=0]
-  - L1 regularization term on weights
+  - L1 regularization term on weights, increase this value will make model more conservative.
+* tree_method, string [default='auto']
+  - The tree constructtion algorithm used in XGBoost(see description in the [reference paper](http://arxiv.org/abs/1603.02754))
+  - Distributed and external memory version only support approximate algorithm.
+  - Choices: {'auto', 'exact', 'approx'}
+    - 'auto': Use heuristic to choose faster one.
+      - For small to medium dataset, exact greedy will be used.
+      - For very large-dataset, approximate algorithm will be choosed.
+      - Because old behavior is always use exact greedy in single machine,
+        user will get a message when approximate algorithm is choosed to notify this choice.
+    - 'exact': Exact greedy algorithm.
+    - 'approx': Approximate greedy algorithm using sketching and histogram.
+* sketch_eps, [default=0.03]
+  - This is only used for approximate greedy algorithm.
+  - This roughly translated into ```O(1 / sketch_eps)``` number of bins.
+    Compared to directly select number of bins, this comes with theoretical ganrantee with sketch accuracy.
+  - Usuaully user do not have to tune this.
+    but consider set to lower number for more accurate enumeration.
+  - range: (0, 1)
+* scale_pos_weight, [default=0]
+  - Control the balance of positive and negative weights, useful for unbalanced classes. A typical value to consider: sum(negative  cases) / sum(positive cases) See [Parameters Tuning](param_tuning.md) for more discussion. Also see Higgs Kaggle competition demo for examples: [R](../demo/kaggle-higgs/higgs-train.R ), [py1](../demo/kaggle-higgs/higgs-numpy.py ), [py2](../demo/kaggle-higgs/higgs-cv.py ), [py3](../demo/guide-python/cross_validation.py) 
 
 Parameters for Linear Booster
 -----------------------------
 * lambda [default=0]
-  - L2 regularization term on weights
+  - L2 regularization term on weights, increase this value will make model more conservative.
 * alpha [default=0]
-  - L1 regularization term on weights
+  - L1 regularization term on weights, increase this value will make model more conservative.
 * lambda_bias
   - L2 regularization term on bias, default 0(no L1 reg on bias because it is not important)
 
@@ -75,15 +98,17 @@ Specify the learning task and the corresponding learning objective. The objectiv
  - "rank:pairwise" --set XGBoost to do ranking task by minimizing the pairwise loss
 * base_score [ default=0.5 ]
   - the initial prediction score of all instances, global bias
+  - for sufficent number of iterations, changing this value will not have too much effect.
 * eval_metric [ default according to objective ]
   - evaluation metrics for validation data, a default metric will be assigned according to objective( rmse for regression, and error for classification, mean average precision for ranking )
   - User can add multiple evaluation metrics, for python user, remember to pass the metrics in as list of parameters pairs instead of map, so that latter 'eval_metric' won't override previous one
   - The choices are listed below:
   - "rmse": [root mean square error](http://en.wikipedia.org/wiki/Root_mean_square_error)
+  - "mae": [mean absolute error](https://en.wikipedia.org/wiki/Mean_absolute_error)
   - "logloss": negative [log-likelihood](http://en.wikipedia.org/wiki/Log-likelihood)
   - "error": Binary classification error rate. It is calculated as #(wrong cases)/#(all cases). For the predictions, the evaluation will regard the instances with prediction value larger than 0.5 as positive instances, and the others as negative instances.
   - "merror": Multiclass classification error rate. It is calculated as #(wrong cases)/#(all cases).
-  - "mlogloss":  Multiclass logloss
+  - "mlogloss": [Multiclass logloss](https://www.kaggle.com/wiki/MultiClassLogLoss)
   - "auc": [Area under the curve](http://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_curve) for ranking evaluation.
   - "ndcg":[Normalized Discounted Cumulative Gain](http://en.wikipedia.org/wiki/NDCG)
   - "map":[Mean average precision](http://en.wikipedia.org/wiki/Mean_average_precision#Mean_average_precision)
